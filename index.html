@@ -9,25 +9,29 @@
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="p-10 bg-base-200 min-h-screen">
-    <div class="max-w-xl mx-auto bg-base-100 p-8 rounded-box shadow-xl border border-base-300">
-        <h1 class="text-3xl font-bold mb-6 text-primary">Minimal Repro</h1>
+    <div class="max-w-4xl mx-auto bg-base-100 p-8 rounded-box shadow-xl border border-base-300">
+        <h1 class="text-3xl font-bold mb-6 text-primary text-center">Firefox Select Layout Bug Repro</h1>
         
-        <div class="mb-8 flex gap-2">
-            <button onclick="runOuterHTML()" class="btn btn-primary btn-sm">1. Replace via outerHTML</button>
-            <button onclick="runReplaceChild()" class="btn btn-secondary btn-sm">2. Replace via replaceChild</button>
-            <button onclick="window.location.reload()" class="btn btn-ghost btn-sm">Reset</button>
+        <div class="mb-8 grid grid-cols-2 md:grid-cols-4 gap-2">
+            <button onclick="runReplaceChildWithClone()" class="btn btn-primary btn-sm">1. cloneNode + replaceChild</button>
+            <button onclick="runReplaceChildWithFragment()" class="btn btn-primary btn-sm">2. Fragment + replaceChild</button>
+            <button onclick="runAppendChild()" class="btn btn-secondary btn-sm">3. appendChild</button>
+            <button onclick="runInsertAdjacentHTML()" class="btn btn-secondary btn-sm">4. insertAdjacentHTML</button>
+            <button onclick="runOuterHTML()" class="btn btn-accent btn-sm">5. outerHTML</button>
+            <button onclick="runInnerHTML()" class="btn btn-accent btn-sm">6. innerHTML</button>
+            <button onclick="window.location.reload()" class="btn btn-ghost btn-sm col-span-2">Reset</button>
         </div>
 
-        <div id="target-container">
-            <div id="target" class="p-4 border-2 border-dashed border-base-300 rounded-lg">
-                Placeholder: clicking a button will replace this entire div.
+        <div id="target-container" class="bg-base-200 p-6 rounded-lg min-h-[200px]">
+            <div id="target" class="p-4 border-2 border-dashed border-base-300 rounded-lg text-center">
+                Target Element
             </div>
         </div>
     </div>
 
     <!-- Template holding our payload -->
     <template id="payload">
-        <div id="target" class="p-4 border-2 border-solid border-success rounded-lg">
+        <div id="target" class="p-4 border-2 border-solid border-success rounded-lg bg-base-100">
             <div class="fieldset">
                 <label>
                     <span class="label mb-1 font-bold text-success">Nested Select</span>
@@ -49,21 +53,48 @@
     </template>
 
     <script>
+        function runReplaceChildWithClone() {
+            const target = document.getElementById('target');
+            const template = document.getElementById('payload');
+            // Exactly what morphdom does internally: node.cloneNode(true) and then replaceChild
+            const newNode = template.content.firstElementChild.cloneNode(true);
+            target.parentNode.replaceChild(newNode, target);
+        }
+
+        function runReplaceChildWithFragment() {
+            const target = document.getElementById('target');
+            const template = document.getElementById('payload');
+            const fragment = template.content.cloneNode(true);
+            const newNode = fragment.firstElementChild;
+            target.parentNode.replaceChild(newNode, target);
+        }
+
+        function runAppendChild() {
+            const container = document.getElementById('target-container');
+            const template = document.getElementById('payload');
+            // Clear current content
+            container.innerHTML = '';
+            const newNode = template.content.firstElementChild.cloneNode(true);
+            container.appendChild(newNode);
+        }
+
+        function runInsertAdjacentHTML() {
+            const container = document.getElementById('target-container');
+            const template = document.getElementById('payload');
+            container.innerHTML = '';
+            container.insertAdjacentHTML('afterbegin', template.innerHTML);
+        }
+
         function runOuterHTML() {
             const target = document.getElementById('target');
             const template = document.getElementById('payload');
             target.outerHTML = template.innerHTML;
         }
 
-        function runReplaceChild() {
-            const target = document.getElementById('target');
+        function runInnerHTML() {
+            const container = document.getElementById('target-container');
             const template = document.getElementById('payload');
-            
-            const temp = document.createElement('div');
-            temp.appendChild(template.content.cloneNode(true));
-            const newNode = temp.firstElementChild;
-            
-            target.parentNode.replaceChild(newNode, target);
+            container.innerHTML = template.innerHTML;
         }
     </script>
 </body>
