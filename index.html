@@ -23,37 +23,18 @@
     </style>
 </head>
 <body class="p-10 bg-base-200 min-h-screen">
-    <div class="max-w-3xl mx-auto bg-base-100 p-8 rounded-box shadow-xl border border-base-300">
+    <div class="max-w-3xl mx-auto p-8 border border-gray-300">
         <h1 class="text-3xl font-bold mb-6 text-primary">Firefox Morphdom Select Repro</h1>
-        <p class="mb-6 text-base-content/70">
-            Click "Navigate to Form" to simulate LiveView patch navigation. This will replace the container contents via <code>morphdom</code>. In Firefox 149 (Mac), the text positioning within the DaisyUI select element (nested inside a label) breaks.
-        </p>
-
-        <!-- Navigation actions -->
-        <div class="flex gap-4 items-center mb-8 pb-4 border-b border-base-300">
-            <button id="nav-index" onclick="patchNavigate('index')" class="btn btn-outline btn-sm" disabled>Index Page</button>
-            <button id="nav-form" onclick="patchNavigate('form')" class="btn btn-primary btn-sm">Navigate to Form</button>
-            <button onclick="window.location.reload()" class="btn btn-ghost btn-sm">Full Reload</button>
+        
+        <div class="mb-8">
+            <button onclick="patchNavigate('form')" class="btn btn-primary">Morph Form</button>
         </div>
         
         <!-- Main Content Area that gets morphed -->
         <main id="main-content">
-            <div id="page-index" class="p-4 border-2 border-dashed border-base-300 rounded-lg">
-                <h2 class="text-xl font-bold mb-4">Listing Tags (Index)</h2>
-                <button onclick="patchNavigate('form')" class="btn btn-primary">Edit</button>
-            </div>
+            <div id="placeholder">Click the button to morphdom the form here.</div>
         </main>
     </div>
-
-    <!-- Templates for the pages -->
-    <template id="template-index">
-        <main id="main-content">
-            <div id="page-index" class="p-4 border-2 border-dashed border-base-300 rounded-lg">
-                <h2 class="text-xl font-bold mb-4">Listing Tags (Index)</h2>
-                <button onclick="patchNavigate('form')" class="btn btn-primary">Edit</button>
-            </div>
-        </main>
-    </template>
 
     <template id="template-form">
         <main id="main-content">
@@ -92,21 +73,13 @@
             const container = document.getElementById('main-content');
             const template = document.getElementById(`template-${page}`);
             
-            // Create a temporary element to hold the template's content
             const temp = document.createElement('div');
             temp.appendChild(template.content.cloneNode(true));
-            const newNode = temp.firstElementChild; // The <main> element
+            const newNode = temp.firstElementChild;
             
-            console.log(`Morphing to ${page}...`);
-            
-            // Morphdom to simulate LiveView page patch
             morphdom(container, newNode, {
                 childrenOnly: false
             });
-            
-            // Update button states
-            document.getElementById('nav-index').disabled = (page === 'index');
-            document.getElementById('nav-form').disabled = (page === 'form');
         }
     </script>
 </body>
