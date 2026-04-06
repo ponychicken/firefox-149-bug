@@ -3,124 +3,94 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Firefox Morphdom Select Repro</title>
-    <!-- DaisyUI CDN -->
+    <title>Minimal Firefox Select Bug Repro</title>
     <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.css" rel="stylesheet" type="text/css" />
-    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Morphdom CDN via JSDelivr -->
     <script src="https://cdn.jsdelivr.net/npm/morphdom@2.7.2/dist/morphdom-umd.min.js"></script>
-    <style>
-        .repro-log {
-            font-family: monospace;
-            background: #eee;
-            padding: 1rem;
-            margin-top: 1rem;
-            border-radius: 0.5rem;
-            max-height: 200px;
-            overflow-y: auto;
-        }
-        /* Emulate layout styles if needed */
-    </style>
 </head>
 <body class="p-10 bg-base-200 min-h-screen">
-    <div class="max-w-3xl mx-auto bg-base-100 p-8 rounded-box shadow-xl border border-base-300">
-        <h1 class="text-3xl font-bold mb-6 text-primary">Firefox Morphdom Select Repro</h1>
-        <p class="mb-6 text-base-content/70">
-            Click "Navigate to Form" to simulate LiveView patch navigation. This will replace the container contents via <code>morphdom</code>. In Firefox 149 (Mac), the text positioning within the DaisyUI select element (nested inside a label) breaks.
-        </p>
-
-        <!-- Navigation actions -->
-        <div class="flex gap-4 items-center mb-8 pb-4 border-b border-base-300">
-            <button id="nav-index" onclick="patchNavigate('index')" class="btn btn-outline btn-sm" disabled>Index Page</button>
-            <button id="nav-form" onclick="patchNavigate('form')" class="btn btn-primary btn-sm">Navigate to Form</button>
-            <button onclick="window.location.reload()" class="btn btn-ghost btn-sm">Full Reload</button>
-        </div>
+    <div class="max-w-5xl mx-auto bg-base-100 p-8 rounded-box shadow-xl border border-base-300">
+        <h1 class="text-3xl font-bold mb-6 text-primary">Minimal Repro</h1>
         
-        <!-- Main Content Area that gets morphed -->
-        <main id="main-content">
-            <div id="page-index" class="p-4 border-2 border-dashed border-base-300 rounded-lg">
-                <h2 class="text-xl font-bold mb-4">Listing Tags (Index)</h2>
-                <table class="table w-full">
-                    <thead><tr><th>Name</th><th>Comment</th><th>Actions</th></tr></thead>
-                    <tbody>
-                        <tr><td>Tag 1</td><td>df</td><td><button onclick="patchNavigate('form')" class="text-primary hover:underline">Edit</button></td></tr>
-                    </tbody>
-                </table>
+        <div class="flex gap-4 mb-8 border-b border-base-300 pb-6">
+            <button onclick="runMorphdom()" class="btn btn-primary">1. Update via Morphdom</button>
+            <button onclick="runVanilla()" class="btn btn-secondary">2. Update via Vanilla DOM</button>
+            <button onclick="window.location.reload()" class="btn btn-ghost">Reset</button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <!-- 1. Static Control -->
+            <div class="p-4 border border-base-300 rounded-lg">
+                <h2 class="font-bold text-lg mb-4 text-base-content/70">Static (Control)</h2>
+                <label>
+                    <span class="label-text block mb-1">Static Select</span>
+                    <select class="select select-bordered w-full">
+                        <option>Original A</option>
+                        <option>Original B</option>
+                    </select>
+                </label>
             </div>
-        </main>
+
+            <!-- 2. Morphdom Container -->
+            <div class="p-4 border border-primary rounded-lg bg-primary/5">
+                <h2 class="font-bold text-lg mb-4 text-primary">Morphdom Target</h2>
+                <div id="morph-target">
+                    <label>
+                        <span class="label-text block mb-1">Morphdom Select</span>
+                        <select class="select select-bordered w-full">
+                            <option>Initial 1</option>
+                            <option>Initial 2</option>
+                        </select>
+                    </label>
+                </div>
+            </div>
+
+            <!-- 3. Vanilla DOM Container -->
+            <div class="p-4 border border-secondary rounded-lg bg-secondary/5">
+                <h2 class="font-bold text-lg mb-4 text-secondary">Vanilla DOM Target</h2>
+                <div id="vanilla-target">
+                    <label>
+                        <span class="label-text block mb-1">Vanilla Select</span>
+                        <select class="select select-bordered w-full">
+                            <option>Initial X</option>
+                            <option>Initial Y</option>
+                        </select>
+                    </label>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <!-- Templates for the pages -->
-    <template id="template-index">
-        <main id="main-content">
-            <div id="page-index" class="p-4 border-2 border-dashed border-base-300 rounded-lg">
-                <h2 class="text-xl font-bold mb-4">Listing Tags (Index)</h2>
-                <table class="table w-full">
-                    <thead><tr><th>Name</th><th>Comment</th><th>Actions</th></tr></thead>
-                    <tbody>
-                        <tr><td>Tag 1</td><td>df</td><td><button onclick="patchNavigate('form')" class="text-primary hover:underline">Edit</button></td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </main>
-    </template>
-
-    <template id="template-form">
-        <main id="main-content">
-            <div id="page-form" class="p-4 border-2 border-dashed border-base-300 rounded-lg">
-                <h2 class="text-xl font-bold mb-4">Edit Tag (Form)</h2>
-                
-                <form id="tag-form" onsubmit="event.preventDefault()">
-                    <!-- Exact structure from hello_world/lib/hello_world_web/components/core_components.ex -->
-                    <div class="fieldset mb-4">
-                        <label>
-                            <span class="label mb-1 font-bold">Comment (Nested Select)</span>
-                            <select id="tag-form_comment" name="tag[comment]" class="w-full select select-bordered">
-                                <option value="D">D</option>
-                                <option value="df" selected>df</option>
-                            </select>
-                        </label>
-                    </div>
-
-                    <!-- Alternate structure: not nested -->
-                    <div class="fieldset mb-4 mt-8">
-                        <label for="tag-form_other" class="label mb-1 font-bold">Other (Unnested Select)</label>
-                        <select id="tag-form_other" name="tag[other]" class="w-full select select-bordered">
-                            <option value="1">Option 1</option>
-                            <option value="2">Option 2</option>
-                        </select>
-                    </div>
-
-                    <div class="mt-6 flex gap-2">
-                        <button class="btn btn-primary">Save Tag</button>
-                        <button type="button" onclick="patchNavigate('index')" class="btn btn-ghost">Cancel</button>
-                    </div>
-                </form>
-            </div>
-        </main>
-    </template>
-
     <script>
-        function patchNavigate(page) {
-            const container = document.getElementById('main-content');
-            const template = document.getElementById(`template-${page}`);
+        function runMorphdom() {
+            const target = document.getElementById('morph-target');
+            const newHTML = `
+            <div id="morph-target">
+                <label>
+                    <span class="label-text block mb-1 font-bold text-primary">Morphdom Select (Updated)</span>
+                    <select class="select select-bordered w-full border-primary">
+                        <option>Updated 1</option>
+                        <option selected>Updated 2 (Selected)</option>
+                    </select>
+                </label>
+            </div>`;
             
-            // Create a temporary element to hold the template's content
             const temp = document.createElement('div');
-            temp.appendChild(template.content.cloneNode(true));
-            const newNode = temp.firstElementChild; // The <main> element
-            
-            console.log(`Morphing to ${page}...`);
-            
-            // Morphdom to simulate LiveView page patch
-            morphdom(container, newNode, {
-                childrenOnly: false
-            });
-            
-            // Update button states
-            document.getElementById('nav-index').disabled = (page === 'index');
-            document.getElementById('nav-form').disabled = (page === 'form');
+            temp.innerHTML = newHTML.trim();
+            morphdom(target, temp.firstChild);
+        }
+
+        function runVanilla() {
+            const target = document.getElementById('vanilla-target');
+            target.innerHTML = `
+                <label>
+                    <span class="label-text block mb-1 font-bold text-secondary">Vanilla Select (Updated)</span>
+                    <select class="select select-bordered w-full border-secondary">
+                        <option>Updated X</option>
+                        <option selected>Updated Y (Selected)</option>
+                    </select>
+                </label>
+            `;
         }
     </script>
 </body>
