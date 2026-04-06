@@ -3,93 +3,139 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Minimal Firefox Select Bug Repro</title>
+    <title>Ancestry Firefox Select Bug Repro</title>
     <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.css" rel="stylesheet" type="text/css" />
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/morphdom@2.7.2/dist/morphdom-umd.min.js"></script>
 </head>
 <body class="p-10 bg-base-200 min-h-screen">
-    <div class="max-w-5xl mx-auto bg-base-100 p-8 rounded-box shadow-xl border border-base-300">
-        <h1 class="text-3xl font-bold mb-6 text-primary">Minimal Repro</h1>
+    <div class="max-w-6xl mx-auto bg-base-100 p-8 rounded-box shadow-xl border border-base-300">
+        <h1 class="text-3xl font-bold mb-6 text-primary">Ancestry Repro</h1>
         
         <div class="flex gap-4 mb-8 border-b border-base-300 pb-6">
-            <button onclick="runMorphdom()" class="btn btn-primary">1. Update via Morphdom</button>
-            <button onclick="runVanilla()" class="btn btn-secondary">2. Update via Vanilla DOM</button>
+            <button onclick="morphDirectParent()" class="btn btn-outline">1. Morph Direct Parent</button>
+            <button onclick="morphDistantAncestor()" class="btn btn-primary">2. Morph Distant Ancestor</button>
+            <button onclick="vanillaDistantAncestor()" class="btn btn-secondary">3. Vanilla Distant Ancestor</button>
             <button onclick="window.location.reload()" class="btn btn-ghost">Reset</button>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <!-- 1. Static Control -->
+            
+            <!-- Test 1: Morphing the immediate parent -->
             <div class="p-4 border border-base-300 rounded-lg">
-                <h2 class="font-bold text-lg mb-4 text-base-content/70">Static (Control)</h2>
-                <label>
-                    <span class="label-text block mb-1">Static Select</span>
-                    <select class="select select-bordered w-full">
-                        <option>Original A</option>
-                        <option>Original B</option>
-                    </select>
-                </label>
-            </div>
-
-            <!-- 2. Morphdom Container -->
-            <div class="p-4 border border-primary rounded-lg bg-primary/5">
-                <h2 class="font-bold text-lg mb-4 text-primary">Morphdom Target</h2>
-                <div id="morph-target">
+                <h2 class="font-bold text-lg mb-4">1. Direct Parent</h2>
+                <div id="target-direct">
                     <label>
-                        <span class="label-text block mb-1">Morphdom Select</span>
+                        <span class="label-text block mb-1">Select 1</span>
                         <select class="select select-bordered w-full">
-                            <option>Initial 1</option>
-                            <option>Initial 2</option>
+                            <option>Initial A</option>
                         </select>
                     </label>
                 </div>
             </div>
 
-            <!-- 3. Vanilla DOM Container -->
+            <!-- Test 2: Morphing a distant ancestor (like in the LiveView case) -->
+            <div class="p-4 border border-primary rounded-lg bg-primary/5">
+                <h2 class="font-bold text-lg mb-4 text-primary">2. Distant Ancestor (Morph)</h2>
+                <div id="target-distant-morph">
+                    <main>
+                        <div>
+                            <form onsubmit="event.preventDefault()">
+                                <div class="fieldset">
+                                    <label>
+                                        <span class="label-text block mb-1">Select 2</span>
+                                        <select class="select select-bordered w-full">
+                                            <option>Initial B</option>
+                                        </select>
+                                    </label>
+                                </div>
+                            </form>
+                        </div>
+                    </main>
+                </div>
+            </div>
+
+            <!-- Test 3: Vanilla DOM replacement of a distant ancestor -->
             <div class="p-4 border border-secondary rounded-lg bg-secondary/5">
-                <h2 class="font-bold text-lg mb-4 text-secondary">Vanilla DOM Target</h2>
-                <div id="vanilla-target">
-                    <label>
-                        <span class="label-text block mb-1">Vanilla Select</span>
-                        <select class="select select-bordered w-full">
-                            <option>Initial X</option>
-                            <option>Initial Y</option>
-                        </select>
-                    </label>
+                <h2 class="font-bold text-lg mb-4 text-secondary">3. Distant Ancestor (Vanilla)</h2>
+                <div id="target-distant-vanilla">
+                    <main>
+                        <div>
+                            <form onsubmit="event.preventDefault()">
+                                <div class="fieldset">
+                                    <label>
+                                        <span class="label-text block mb-1">Select 3</span>
+                                        <select class="select select-bordered w-full">
+                                            <option>Initial C</option>
+                                        </select>
+                                    </label>
+                                </div>
+                            </form>
+                        </div>
+                    </main>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        function runMorphdom() {
-            const target = document.getElementById('morph-target');
+        function morphDirectParent() {
+            const target = document.getElementById('target-direct');
             const newHTML = `
-            <div id="morph-target">
+            <div id="target-direct">
                 <label>
-                    <span class="label-text block mb-1 font-bold text-primary">Morphdom Select (Updated)</span>
-                    <select class="select select-bordered w-full border-primary">
-                        <option>Updated 1</option>
-                        <option selected>Updated 2 (Selected)</option>
+                    <span class="label-text block mb-1 font-bold">Select 1 (Updated)</span>
+                    <select class="select select-bordered w-full">
+                        <option>Updated A</option>
                     </select>
                 </label>
             </div>`;
-            
             const temp = document.createElement('div');
             temp.innerHTML = newHTML.trim();
             morphdom(target, temp.firstChild);
         }
 
-        function runVanilla() {
-            const target = document.getElementById('vanilla-target');
+        function morphDistantAncestor() {
+            const target = document.getElementById('target-distant-morph');
+            const newHTML = `
+            <div id="target-distant-morph">
+                <main>
+                    <div>
+                        <form onsubmit="event.preventDefault()">
+                            <div class="fieldset">
+                                <label>
+                                    <span class="label-text block mb-1 font-bold text-primary">Select 2 (Updated)</span>
+                                    <select class="select select-bordered w-full border-primary">
+                                        <option>Updated B</option>
+                                    </select>
+                                </label>
+                            </div>
+                        </form>
+                    </div>
+                </main>
+            </div>`;
+            const temp = document.createElement('div');
+            temp.innerHTML = newHTML.trim();
+            morphdom(target, temp.firstChild);
+        }
+
+        function vanillaDistantAncestor() {
+            const target = document.getElementById('target-distant-vanilla');
             target.innerHTML = `
-                <label>
-                    <span class="label-text block mb-1 font-bold text-secondary">Vanilla Select (Updated)</span>
-                    <select class="select select-bordered w-full border-secondary">
-                        <option>Updated X</option>
-                        <option selected>Updated Y (Selected)</option>
-                    </select>
-                </label>
+                <main>
+                    <div>
+                        <form onsubmit="event.preventDefault()">
+                            <div class="fieldset">
+                                <label>
+                                    <span class="label-text block mb-1 font-bold text-secondary">Select 3 (Updated)</span>
+                                    <select class="select select-bordered w-full border-secondary">
+                                        <option>Updated C</option>
+                                    </select>
+                                </label>
+                            </div>
+                        </form>
+                    </div>
+                </main>
             `;
         }
     </script>
