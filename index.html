@@ -3,83 +3,67 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Firefox Morphdom Select Repro</title>
+    <title>Minimal Firefox DaisyUI Select Bug</title>
     <!-- DaisyUI CDN -->
     <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.css" rel="stylesheet" type="text/css" />
-    <!-- Tailwind CSS removed for isolation -->
-    <!-- Morphdom CDN via JSDelivr -->
-    <script src="https://cdn.jsdelivr.net/npm/morphdom@2.7.2/dist/morphdom-umd.min.js"></script>
-    <style>
-        .repro-log {
-            font-family: monospace;
-            background: #eee;
-            padding: 1rem;
-            margin-top: 1rem;
-            border-radius: 0.5rem;
-            max-height: 200px;
-            overflow-y: auto;
-        }
-        /* Emulate layout styles if needed */
-    </style>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="p-10 bg-base-200 min-h-screen">
-    <div class="max-w-3xl mx-auto p-8 border border-gray-300">
-        <h1 class="text-3xl font-bold mb-6 text-primary">Firefox Morphdom Select Repro</h1>
+    <div class="max-w-xl mx-auto bg-base-100 p-8 rounded-box shadow-xl border border-base-300">
+        <h1 class="text-3xl font-bold mb-6 text-primary">Minimal Repro</h1>
         
-        <div class="mb-8">
-            <button onclick="patchNavigate('form')" class="btn btn-primary">Morph Form</button>
+        <div class="mb-8 flex gap-2">
+            <button onclick="runOuterHTML()" class="btn btn-primary btn-sm">1. Replace via outerHTML</button>
+            <button onclick="runReplaceChild()" class="btn btn-secondary btn-sm">2. Replace via replaceChild</button>
+            <button onclick="window.location.reload()" class="btn btn-ghost btn-sm">Reset</button>
         </div>
-        
-        <!-- Main Content Area that gets morphed -->
-        <main id="main-content">
-            <div id="placeholder">Click the button to morphdom the form here.</div>
-        </main>
+
+        <div id="target-container">
+            <div id="target" class="p-4 border-2 border-dashed border-base-300 rounded-lg">
+                Placeholder: clicking a button will replace this entire div.
+            </div>
+        </div>
     </div>
 
-    <template id="template-form">
-        <main id="main-content">
-            <div id="page-form" class="p-4 border-2 border-dashed border-base-300 rounded-lg">
-                <h2 class="text-xl font-bold mb-4">Edit Tag (Form)</h2>
-                
-                <form id="tag-form" onsubmit="event.preventDefault()">
-                    <div class="fieldset mb-4">
-                        <label>
-                            <span class="label mb-1 font-bold">Comment (Nested Select)</span>
-                            <select id="tag-form_comment" name="tag[comment]" class="w-full select select-bordered">
-                                <option value="D">D</option>
-                                <option value="df" selected>df</option>
-                            </select>
-                        </label>
-                    </div>
-
-                    <div class="fieldset mb-4 mt-8">
-                        <label for="tag-form_other" class="label mb-1 font-bold">Other (Unnested Select)</label>
-                        <select id="tag-form_other" name="tag[other]" class="w-full select select-bordered">
-                            <option value="1">Option 1</option>
-                            <option value="2">Option 2</option>
-                        </select>
-                    </div>
-
-                    <div class="mt-6 flex gap-2">
-                        <button type="button" onclick="patchNavigate('index')" class="btn btn-ghost">Cancel</button>
-                    </div>
-                </form>
+    <!-- Template holding our payload -->
+    <template id="payload">
+        <div id="target" class="p-4 border-2 border-solid border-success rounded-lg">
+            <div class="fieldset">
+                <label>
+                    <span class="label mb-1 font-bold text-success">Nested Select</span>
+                    <select class="select select-bordered select-success w-full">
+                        <option selected>Initial Value</option>
+                        <option>Other Value</option>
+                    </select>
+                </label>
             </div>
-        </main>
+
+            <div class="fieldset mt-6">
+                <label for="unnested" class="label mb-1 font-bold text-success">Unnested Select</label>
+                <select id="unnested" class="select select-bordered select-success w-full">
+                    <option selected>Initial Value</option>
+                    <option>Other Value</option>
+                </select>
+            </div>
+        </div>
     </template>
 
     <script>
-        function patchNavigate(page) {
-            const container = document.getElementById('main-content');
-            const template = document.getElementById(`template-${page}`);
+        function runOuterHTML() {
+            const target = document.getElementById('target');
+            const template = document.getElementById('payload');
+            target.outerHTML = template.innerHTML;
+        }
+
+        function runReplaceChild() {
+            const target = document.getElementById('target');
+            const template = document.getElementById('payload');
             
             const temp = document.createElement('div');
             temp.appendChild(template.content.cloneNode(true));
             const newNode = temp.firstElementChild;
             
-            morphdom(container, newNode, {
-                childrenOnly: false
-            });
+            target.parentNode.replaceChild(newNode, target);
         }
     </script>
 </body>
